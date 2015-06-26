@@ -77,6 +77,9 @@ namespace ecto_linemod
       params.declare(&Trainer::param_focal_length_y_, "renderer_focal_length_y", "Renderer parameter: the focal length y.", 525.0);
       params.declare(&Trainer::param_near_, "renderer_near", "Renderer parameter: near distance.", 0.1);
       params.declare(&Trainer::param_far_, "renderer_far", "Renderer parameter: far distance.", 1000.0);
+      params.declare(&Trainer::param_ignore_neg_z_, "ignore_neg_z", "if true, ignore neg z.", true);
+      params.declare(&Trainer::param_is_z_symmetric_, "is_z_symmetric", "if true, don't sample all around globe.", false);
+      params.declare(&Trainer::param_write_templates_, "write_templates", "if true, write the rgb images to a directory.", false);
     }
 
     static void
@@ -86,7 +89,6 @@ namespace ecto_linemod
       inputs.declare(&Trainer::object_id_, "object_id",
         "The object id, to associate this model with.").required(true);
       inputs.declare(&Trainer::visualize_, "visualize", "If True, visualize the output.", true);
-
       outputs.declare(&Trainer::detector_, "detector", "The LINE-MOD detector");
       outputs.declare(&Trainer::Rs_, "Rs", "The matching rotations of the templates");
       outputs.declare(&Trainer::Ts_, "Ts", "The matching translations of the templates.");
@@ -178,11 +180,20 @@ namespace ecto_linemod
     renderer_iterator.radius_min_ = float(*renderer_radius_min_);
     renderer_iterator.radius_max_ = float(*renderer_radius_max_);
     renderer_iterator.radius_step_ = float(*renderer_radius_step_);
-
+    renderer_iterator.ignore_neg_z_ = bool(*param_ignore_neg_z_);
+    renderer_iterator.is_z_symmetric_ = bool(*param_is_z_symmetric_);
+    if (renderer_iterator.ignore_neg_z_) {
+      std::stringstream status;
+      status << "ignore neg z values!";
+      std::cout << status.str();
+    }
     cv::Mat image, depth, mask;
     cv::Matx33d R;
     cv::Vec3d T;
     cv::Matx33f K;
+    // NOTE:arpit tempplate thing
+    if (bool(*param_write_templates_)) 
+      printf("going to be writing the images!\n");
     for (size_t i = 0; !renderer_iterator.isDone(); ++i, ++renderer_iterator)
     {
       std::stringstream status;
@@ -192,7 +203,11 @@ namespace ecto_linemod
 
       cv::Rect rect;
       renderer_iterator.render(image, depth, mask, rect);
-
+      // flipping to correct stuff
+      // cv::flip(image, image, 0);
+      // cv::flip(depth, depth, 0);
+      // cv::flip(mask, mask, 0);
+      
       R = renderer_iterator.R_obj();
       T = renderer_iterator.T();
       float distance = fabs(renderer_iterator.D_obj() - float(depth.at<ushort>(depth.rows/2.0f, depth.cols/2.0f)/1000.0f));
@@ -201,7 +216,6 @@ namespace ecto_linemod
       std::vector<cv::Mat> sources(2);
       sources[0] = image;
       sources[1] = depth;
-
 #if LINEMOD_VIZ_IMG
       // Display the rendered image
       if (*visualize_)
@@ -221,6 +235,13 @@ namespace ecto_linemod
         for (size_t j = 0; j < status.str().size(); ++j)
           std::cout << '\b';
         continue;
+      } else {
+        // NOTE:arpit adding code to save the template images in a directory
+        if ((bool)*param_write_templates_) {
+          char buf[100];
+          sprintf(buf, "/data/template-images/linemod_%d.png", template_in);
+          imwrite(buf, image);        
+        }
       }
 
       // Also store the pose of each template
@@ -248,6 +269,9 @@ namespace ecto_linemod
     ecto::spore<std::vector<cv::Mat> > Ts_;
     ecto::spore<std::vector<float> > distances_;
     ecto::spore<std::vector<cv::Mat> > Ks_;
+    ecto::spore<bool> param_ignore_neg_z_;
+    ecto::spore<bool> param_is_z_symmetric_;
+    ecto::spore<bool> param_write_templates_;
     ecto::spore<int> param_n_points_;
     ecto::spore<int> param_angle_step_;
     ecto::spore<double> param_radius_min_;

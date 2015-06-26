@@ -4,6 +4,15 @@ pipeline1:
   parameters:
     # The list of object_ids to analyze
     object_ids: 'all'
+    visualize: 1
+    ignore_neg_z: true
+    is_z_symmetric: true
+    write_templates: true
+    renderer_radius_min: 0.6
+    renderer_radius_max: 1.1
+    renderer_radius_step: 0.2
+    renderer_n_points: 30
+    renderer_angle_step: 10
     db:
       type: 'CouchDB'
       root: 'http://localhost:5984'

@@ -316,14 +316,19 @@ struct Detector: public object_recognition_core::db::bases::ModelReaderBase {
       pci_real_icpin_model->clear();
       pci_real_icpin_ref->clear();
 #endif
-
+    // NOTE:arpit adding debugging code to print pyramidLevels and numModalities
+    // printf("pyramid levels = %d, num modalities = %d\n", detector_->pyramidLevels(), 
+    //   num_modalities);
+    //NOTE:arpit adding code to rpint the template no.
+    printf("template no.s: ");
     BOOST_FOREACH(const cv::linemod::Match & match, matches) {
       const std::vector<cv::linemod::Template>& templates =
           detector_->getTemplates(match.class_id, match.template_id);
-      if (*visualize_)
+      if (*visualize_) 
         drawResponse(templates, num_modalities, display,
             cv::Point(match.x, match.y), detector_->getT(0));
-
+      // NOTE:arpit print template no.
+      printf("%d, ", match.template_id);
       // Fill the Pose object
       cv::Matx33d R_match = Rs_.at(match.class_id)[match.template_id].clone();
       cv::Vec3d T_match = Ts_.at(match.class_id)[match.template_id].clone();
@@ -337,9 +342,11 @@ struct Detector: public object_recognition_core::db::bases::ModelReaderBase {
       cv::Vec3d up(-R_temp(0,1), -R_temp(1,1), -R_temp(2,1));
       RendererIterator* it_r = renderer_iterators_.at(match.class_id);
       cv::Mat depth_ref_;
+      //NOTE:arpit changing up to -up
       it_r->renderDepthOnly(depth_ref_, mask, rect, -T_match, up);
 
       cv::Mat_<cv::Vec3f> depth_real_model_raw;
+      // NOTE:arpit changing K_match to -K_match to test..
       cv::depthTo3d(depth_ref_, K_match, depth_real_model_raw);
 
       //prepare the bounding box for the model and reference point clouds
@@ -399,10 +406,12 @@ struct Detector: public object_recognition_core::db::bases::ModelReaderBase {
       icp_dist = icpCloudToCloud(pts_real_ref_temp, pts_real_model_temp, R_real_icp, T_real_icp, px_ratio_match_inliers, 2);
 
       //keep the object match
-      objs_.push_back(object_recognition_core::db::ObjData(pts_real_ref_temp, pts_real_model_temp, match.class_id, match.similarity, icp_dist, px_ratio_match_inliers, R_real_icp, T_crop));
+      // NOTE:arpit changing R_real_icp, T_crop to R_match, T_crop
+      objs_.push_back(object_recognition_core::db::ObjData(pts_real_ref_temp, pts_real_model_temp, match.class_id, match.similarity, icp_dist, px_ratio_match_inliers, R_match, T_crop));
       ++iter;
     }
-
+    // NOTE:arpit \n for printing template no.
+    printf("\n");
     //local non-maxima supression to find the best match at each position
     int count_pass = 0;
     std::vector <object_recognition_core::db::ObjData>::iterator it_o = objs_.begin();

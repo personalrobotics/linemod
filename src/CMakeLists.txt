@@ -1,7 +1,9 @@
 # Compile the ecto 
+message("starting cmake for linemod cpp ><><><><><><><><>")
 option(LINEMOD_VIZ_IMG "activate visualization" OFF)
 if(LINEMOD_VIZ_IMG)
-  add_definitions("-DLINEMOD_VIZ_IMG=1")
+  add_definitions("-DLINEMOD_VIZ_IMG")
+  message("definition added! ><><><><><><><><<><<><>")
 endif()
 
 set(SRC_FILES db_linemod.cpp
