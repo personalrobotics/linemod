@@ -275,9 +275,11 @@ struct Detector: public object_recognition_core::db::bases::ModelReaderBase {
           cv::pyrDown(color_->rowRange(0, 960), color);
         else
           color_->copyTo(color);
-        if (*visualize_)
+        // NOTE:arpit convert from rgb to bgr
+        cv::cvtColor(color, color, cv::COLOR_RGB2BGR);
+        if (*visualize_) {
           display = color;
-
+        }
         sources.push_back(color);
       }
 
@@ -340,9 +342,12 @@ struct Detector: public object_recognition_core::db::bases::ModelReaderBase {
       cv::Rect rect;
       cv::Matx33d R_temp(R_match.inv());
       cv::Vec3d up(-R_temp(0,1), -R_temp(1,1), -R_temp(2,1));
+      // NOTE:arpit changing inversion and next line. refer to git log for exact
+      // changes please.
+      // cv::Vec3d up(R_match(1,0), R_match(1,1), R_match(1,2));
       RendererIterator* it_r = renderer_iterators_.at(match.class_id);
       cv::Mat depth_ref_;
-      //NOTE:arpit changing up to -up
+      //NOTE:arpit changing -T_match to T_match
       it_r->renderDepthOnly(depth_ref_, mask, rect, -T_match, up);
 
       cv::Mat_<cv::Vec3f> depth_real_model_raw;
@@ -374,6 +379,19 @@ struct Detector: public object_recognition_core::db::bases::ModelReaderBase {
       //prepare the model data: from the match
       cv::Mat_<cv::Vec3f> depth_real_model = depth_real_model_raw(rect_model);
 
+      // NOTE:arpit draw the rgb images corresponding to ROI from both 
+      // ref and model:
+      {
+        cv::namedWindow("Ref ROI RGB");
+        cv::Mat rgb_ref = sources[0](rect_ref);
+        cv::imshow("Ref ROI RGB", rgb_ref);
+        cv::namedWindow("Model ROI RGB");
+        cv::Mat rgb_model;
+        it_r->renderImageOnly(rgb_model, rect, -T_match, up);
+        rgb_model = rgb_model(rect_model);
+        cv::imshow("Model ROI RGB", rgb_model);
+        cv::waitKey(1);        
+      }
       //initialize the translation based on reference data
       cv::Vec3f T_crop = depth_real_ref(depth_real_ref.rows / 2.0f, depth_real_ref.cols / 2.0f);
       //add the object's depth
@@ -407,7 +425,7 @@ struct Detector: public object_recognition_core::db::bases::ModelReaderBase {
 
       //keep the object match
       // NOTE:arpit changing R_real_icp, T_crop to R_match, T_crop
-      objs_.push_back(object_recognition_core::db::ObjData(pts_real_ref_temp, pts_real_model_temp, match.class_id, match.similarity, icp_dist, px_ratio_match_inliers, R_match, T_crop));
+      objs_.push_back(object_recognition_core::db::ObjData(pts_real_ref_temp, pts_real_model_temp, match.class_id, match.similarity, icp_dist, px_ratio_match_inliers, R_real_icp, T_crop));
       ++iter;
     }
     // NOTE:arpit \n for printing template no.
@@ -456,6 +474,9 @@ struct Detector: public object_recognition_core::db::bases::ModelReaderBase {
         //return the outcome object pose
         pose_result.set_object_id(db_, o_match->match_class);
         pose_result.set_confidence(o_match->match_sim);
+        // NOTE:arpit inverting all coordinates, maybe this is correct?
+        // o_match->r = cv::Matx33f(1, 0, 0, 0, -1, 0, 0, 0, -1) * o_match->r;
+        o_match->r = o_match->r * cv::Matx33f(1, 0, 0, 0, -1, 0, 0, 0, -1);
         pose_result.set_R(cv::Mat(o_match->r));
         pose_result.set_T(cv::Mat(o_match->t));
         pose_results_->push_back(pose_result);

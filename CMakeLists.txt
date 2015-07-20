@@ -4,8 +4,22 @@ project(object_recognition_linemod)
 option(LINEMOD_VISUALIZE_IMAGE "visualize images with detected objects features" OFF)
 option(LINEMOD_VISUALIZE_POINTCLOUD "visualize point clouds from the reference image and its match from DB" OFF)
 
-find_package(catkin REQUIRED object_recognition_core object_recognition_renderer opencv_candidate)
-catkin_package(CATKIN_DEPENDS ecto object_recognition_core object_recognition_renderer opencv_candidate
+find_package(catkin REQUIRED 
+  opencv_candidate
+  std_msgs
+  message_generation
+  cv_bridge
+  sensor_msgs
+  image_transport
+  object_recognition_core 
+  object_recognition_renderer 
+  )
+catkin_package(CATKIN_DEPENDS 
+  ecto 
+  object_recognition_core 
+  object_recognition_renderer 
+  opencv_candidate
+
                DEPENDS OpenCV
 )
 
@@ -22,6 +36,11 @@ include_directories(SYSTEM ${catkin_INCLUDE_DIRS}
 # Compile the module
 add_subdirectory(python)
 add_subdirectory(src)
+
+add_executable(kinect1_node_linemod src/kinect1_node.cpp)
+target_link_libraries(kinect1_node_linemod ${catkin_LIBRARIES})
+target_link_libraries(kinect1_node_linemod ${OpenCV_LIBRARIES})
+add_dependencies(kinect1_node_linemod object_recognition_linemod_generate_messages_cpp)
 
 # add the tests
 if(CATKIN_ENABLE_TESTING)

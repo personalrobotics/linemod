@@ -27,7 +27,7 @@ sink1:
   inputs: [source1]
 
 pipeline1:
-  type: LinemodDetector
+  type: AprilTagsDetector
   module: 'object_recognition_linemod'
   inputs: [source1]
   outputs: [sink1]
@@ -36,7 +36,7 @@ pipeline1:
     use_depth: 1
     verbose: 1
     visualize: 1
-    threshold: 85 #82.9 #91.6 
+    threshold: 92 #82.9 #91.6 
     th_obj_dist: 0.1
     icp_dist_min: 0.05 #0.06
     px_match_min: 0.25 #0.5

@@ -1,0 +1,29 @@
+HOW TO USE LINEMOD
+
+*Add object mesh:*
+
+// here, plastic_plate is the name of the object, wahtever is its description (not used anywhere..)
+rosrun object_recognition_core object_add.py -n "plastic_plate" -d "wahtever" --commit  
+
+// once executed, the above command will return an object id, which is used in the next command for adding the mesh
+rosrun object_recognition_core mesh_add.py <object_id> <object_mesh.obj> --commit
+// eg. :
+// rosrun object_recognition_core mesh_add.py 3f0abec62876fd72445b1d3da600739b ~/meshes/plastic_plate.obj --commit
+// NOTE: the .obj and corresponding .mtl MUST have absolute paths to the .mtl and the .png (texture) respectively
+
+
+*Run trainer on mesh*
+rosrun object_recognition_core training -c `rospack find object_recognition_linemod`/conf/training.ork 
+
+// the training.ork file is in herb2_ws/linemod/conf/ right now. 
+// NOTE: currently, you cannot provide different training params for different objects, all use the same params.
+
+*Run detection!*
+
+rosrun object_recognition_core detection -c `rospack find object_recognition_linemod`/conf/detection.ros.ork
+
+// again the detection.ros.ork file is in herb2_ws/linemod/conf/
+// again, currently, you cannot provide different detection params for different objects.
+
+// The detector publishes on /recognized_object_array
+// To visualize on rviz, follow instructions from here: http://wg-perception.github.io/ork_tutorials/tutorial03/tutorial.html

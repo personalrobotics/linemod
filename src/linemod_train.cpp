@@ -210,7 +210,14 @@ namespace ecto_linemod
       
       R = renderer_iterator.R_obj();
       T = renderer_iterator.T();
-      float distance = fabs(renderer_iterator.D_obj() - float(depth.at<ushort>(depth.rows/2.0f, depth.cols/2.0f)/1000.0f));
+      // NOTE:arpit removing fabs, distance is now signed.
+      float distance = /*fabs*/(renderer_iterator.D_obj() - float(depth.at<ushort>(depth.rows/2.0f, depth.cols/2.0f)/1000.0f));
+      // NOTE:arpit adding test to see if distance is negative 
+      // float signed_distance = renderer_iterator.D_obj() - float(depth.at<ushort>(depth.rows/2.0f, depth.cols/2.0f)/1000.0f);
+      // if (signed_distance > 0) {
+      //   printf("signed distance is positive = %f\n", signed_distance);
+      //   cv::waitKey(0);
+      // }
       K = cv::Matx33f(float(*renderer_focal_length_x_), 0.0f, float(rect.width)/2.0f, 0.0f, float(*renderer_focal_length_y_), float(rect.height)/2.0f, 0.0f, 0.0f, 1.0f);
 
       std::vector<cv::Mat> sources(2);
@@ -239,8 +246,8 @@ namespace ecto_linemod
         // NOTE:arpit adding code to save the template images in a directory
         if ((bool)*param_write_templates_) {
           char buf[100];
-          sprintf(buf, "/data/template-images/linemod_%d.png", template_in);
-          imwrite(buf, image);        
+          sprintf(buf, "/home/herb_home/linemod-template-images/linemod_%d.png", template_in);
+          cv::imwrite(buf, image);        
         }
       }
 
