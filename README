@@ -27,3 +27,7 @@ rosrun object_recognition_core detection -c `rospack find object_recognition_lin
 
 // The detector publishes on /recognized_object_array
 // To visualize on rviz, follow instructions from here: http://wg-perception.github.io/ork_tutorials/tutorial03/tutorial.html
+
+// ISSUES:
+// The osmesa renderer is not working on herb for some reason (gives garbage render output), so using GLUT renderer
+// which is much slower. probably some gl linking problem with graphics card or someting..
